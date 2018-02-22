@@ -35,7 +35,14 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - Haskforce
-
+    - http-types
+    - http-conduit
+    - wreq
+    - bytestring
+    - aeson
+    - yaml
+    - lens
+    - text
 tests:
   Haskforce-test:
     main:                Spec.hs
