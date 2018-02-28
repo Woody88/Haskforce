@@ -21,7 +21,23 @@ description:         Please see the README on Github at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-
+- http-types
+- http-conduit
+- http-client
+- wreq
+- bytestring
+- aeson
+- yaml
+- lens
+- text
+- hspec
+- transformers
+- hashmap
+- containers
+- servant
+- servant-client
+- http-api-data
+- http-client-tls
 library:
   source-dirs: src
 
@@ -43,6 +59,11 @@ executables:
     - yaml
     - lens
     - text
+    - mtl
+    - http-client
+    - transformers
+    - hashmap
+    - containers
 tests:
   Haskforce-test:
     main:                Spec.hs
@@ -53,3 +74,8 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - Haskforce
+    - hspec
+    - http-client
+    - transformers
+    - hashmap
+    - containers
