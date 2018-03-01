@@ -34,6 +34,7 @@ dependencies:
 - transformers
 - hashmap
 - containers
+- unordered-containers
 - servant
 - servant-client
 - http-api-data

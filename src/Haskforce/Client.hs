@@ -42,8 +42,6 @@ instance ToForm HFCred where
         , "username"      <> (toQueryParam $ username c)
         , "password"      <> (toQueryParam $ password c)
         , "grant_type"    <> (toQueryParam $ grantType c)
-        , "url"           <> (toQueryParam $ url c)
-        , "api_version"   <> (toQueryParam $ apiVersion c)
         ]
 
 type AuthAPI =   "token" :> ReqBody '[FormUrlEncoded] HFCred :> Post '[JSON] HFClient
@@ -81,15 +79,15 @@ getHFCredConfig = do
           handle (Right cred) = return cred
           handle (Left x) = throwIO $ HForceBadConfig x
 
-authenticateClientWithToken :: HFCred -> IO HFClient
+authenticateClientWithToken :: HFCred -> IO (AccessToken, HFClient)
 authenticateClientWithToken hfcred = do
   manager' <- newManager tlsManagerSettings
   res <- runClientM (loginQuery hfcred) (ClientEnv manager' testSalesforce)
   case res of
     Left err -> throwIO err
-    Right client -> return client
+    Right client -> return (AccessToken $ accessToken client, client)
 
-authenticateClient :: AuthType -> IO HFClient
+authenticateClient :: AuthType -> IO (AccessToken, HFClient)
 authenticateClient Token = do
     hfcred <- getHFCredConfig
     authenticateClientWithToken hfcred
@@ -97,7 +95,7 @@ authenticateClient Token = do
           authenticateClient' _ = error "Need to implement"
 
 
-authenticateClientWith :: AuthType -> HFCred -> IO HFClient
+authenticateClientWith :: AuthType -> HFCred -> IO (AccessToken, HFClient)
 authenticateClientWith Token hfcred = authenticateClientWithToken hfcred
 authenticateClientWith _ _ = error "Need to implement"
 

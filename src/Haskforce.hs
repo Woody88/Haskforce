@@ -11,8 +11,9 @@ import Haskforce.Client
 import Control.Exception 
 
 
-login :: AuthType -> IO HFClient
+login :: AuthType -> IO (AccessToken, HFClient)
 login authtype = authenticateClient authtype
 
-loginWith :: AuthType -> HFCred -> IO HFClient
+loginWith :: AuthType -> HFCred -> IO (AccessToken, HFClient)
 loginWith authtype hfcred = authenticateClientWith authtype hfcred
+

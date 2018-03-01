@@ -13,8 +13,12 @@ module Haskforce.Internal
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import qualified Data.Map as Map
+import qualified Data.HashMap.Lazy as HML
+import qualified Data.ByteString.Lazy.Char8 as LBC8
 import GHC.Generics
 import Data.Aeson
+import Data.Aeson.Types
 import Network.HTTP.Client (Response)
 import Control.Exception 
 
@@ -25,6 +29,19 @@ newtype HForceBadConfig =
     deriving (Show)
 
 instance Exception HForceBadConfig
+
+type HFCredOptions = Map.Map HFCredOption Text
+
+data HFCredOption
+    = Display
+    | Scope
+    | State
+    | Format 
+    | CodeVerifier
+    | ClientAssertionType
+    | RedirectUri
+    | Code
+    deriving (Show, Generic, Ord, Eq)
 
 data HFClient = 
     HFClient { accessToken  :: Text
@@ -41,19 +58,34 @@ data HFCred =
             , clientSecret     :: Text
             , username         :: Text
             , password         :: Text
-            , url              :: Text
-            , apiVersion       :: Text
-            , redirectCallback :: Maybe Text
+            , optionals        :: Maybe HFCredOptions
             } deriving (Show, Generic)
 
+data HFCredAuth = 
+    HFCredAuth { responseType :: Text
+               , client_id    :: Text
+               , redirect_uri :: Text
+               }
+
+
 newtype AccessToken = 
-    AccessToken { fromAccess :: HFClient } 
+    AccessToken { fromAccess :: Text } 
     deriving Show
 
 instance FromJSON HFCred where
     parseJSON = genericParseJSON defaultOptions {
         fieldLabelModifier = camelTo2 '_'
     }
+instance FromJSON HFCredOption 
+
+instance FromJSONKey HFCredOption where
+    fromJSONKey = FromJSONKeyText formatTextToType
+
+instance ToJSONKey HFCredOption where
+    toJSONKey = toJSONKeyText formatTypeToText
+
+instance ToJSON HFCredOption where
+    toJSON = String . formatTypeToText
 
 instance FromJSON HFClient where
     parseJSON (Object v) = HFClient 
@@ -65,13 +97,22 @@ instance FromJSON HFClient where
         <*> v .: "issue_at"
 
 instance ToJSON HFCred where
-    toJSON c = object 
-        [ "client_id"     .= clientId c
-        , "client_secret" .= clientSecret c
-        , "username"      .= username c
-        , "password"      .= password c
-        , "grant_type"    .= grantType c
-        , "url"           .= url c
-        , "api_version"   .= apiVersion c
-        ]
-        
+    toJSON c = merge_aeson [requiredFields, toJSON $ optionals c]
+        where requiredFields = object 
+                                [ "client_id"     .= clientId c
+                                , "client_secret" .= clientSecret c
+                                , "username"      .= username c
+                                , "password"      .= password c
+                                , "grant_type"    .= grantType c
+                                ]
+
+formatTypeToText :: Show a => a -> T.Text
+formatTypeToText = T.pack . (camelTo2 '_') . show
+
+formatTextToType :: T.Text -> HFCredOption
+formatTextToType key 
+    | key == "display" = Display 
+    | otherwise = error "false"
+
+merge_aeson :: [Value] -> Value
+merge_aeson = Object . HML.unions . map (\(Object x) -> x)
