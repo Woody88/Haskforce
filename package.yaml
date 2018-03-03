@@ -80,3 +80,11 @@ tests:
     - transformers
     - hashmap
     - containers
+    - warp
+    - servant
+    - servant-server
+    - servant-client
+    - servant-mock
+    - wai
+    - aeson 
+    - QuickCheck

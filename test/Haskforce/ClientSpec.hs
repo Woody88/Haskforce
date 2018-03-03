@@ -1,3 +1,49 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Haskforce.ClientSpec where 
+
+module Haskforce.ClientSpec (main, spec) where 
+
+import           Control.Exception hiding (try)
+import           Network.HTTP.Client (Manager, newManager, defaultManagerSettings, RequestBody(..) )
+
+import           Network.HTTP.Types
+import           Network.Wai (Application)
+import           Network.Wai.Handler.Warp
+import           Servant.API
+import           Servant.Client 
+import           Test.Hspec
+import           Haskforce.MockServer (mkApp)
+import           Haskforce.Client (loginQuery)
+import           Haskforce.Internal
+import           Data.Either (fromLeft)
+import           Servant.Common.Req 
+
+main :: IO ()
+main = hspec spec
+
+spec :: Spec
+spec = do
+  describe "/item" $ do
+    withClient mkApp $ do
+    --   it "lists an example item" $ \ env -> do
+    --     try env getItems `shouldReturn` [Item 0 "example item"]
+
+      -- it "allows to show items by id" $ \ env -> do
+      --   try env (loginQuery fakeHFCred) `shouldThrow` (== ServantError) 
+
+    --   it "throws a 404 for missing items" $ \ env -> do
+    --     try env (getItem 42) `shouldThrow` (\ e -> responseStatus e == notFound404)
+
+withClient :: IO Application -> SpecWith ClientEnv -> SpecWith ()
+withClient x innerSpec =
+  beforeAll (newManager defaultManagerSettings) $ do
+    flip aroundWith innerSpec $ \ action -> \ manager -> do
+      testWithApplication x $ \ port -> do
+        let baseUrl = BaseUrl Http "localhost" port ""
+        action (ClientEnv manager baseUrl)
+
+type Host = (Manager, BaseUrl)
+
+try :: ClientEnv -> ClientM a -> IO a
+try clientEnv action = either throwIO return =<<
+  runClientM action clientEnv
+
