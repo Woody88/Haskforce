@@ -1,12 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
+{-| Ignore this module types for now, they will be removed later.
+    only functions that still being used by other modules...
+|-}
+
 module Haskforce.Internal
     ( Resp 
     , HFClient(..)
     , HFCred(..)
     , AccessToken(..)
     , HForceBadConfig (..)
+    , merge_aeson
+    , valueToText
+    , jsonToForm
     ) 
     where
 
@@ -15,6 +22,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Map as Map
 import qualified Data.HashMap.Lazy as HML
+import qualified Data.HashMap.Strict as HMS
 import qualified Data.ByteString.Lazy.Char8 as LBC8
 import GHC.Generics
 import Data.Aeson
@@ -97,7 +105,7 @@ instance FromJSON HFClient where
         <*> v .: "issue_at"
 
 instance ToJSON HFCred where
-    toJSON c = merge_aeson [requiredFields, toJSON $ optionals c]
+    toJSON c = withOpt $ optionals c
         where requiredFields = object 
                                 [ "client_id"     .= clientId c
                                 , "client_secret" .= clientSecret c
@@ -105,6 +113,8 @@ instance ToJSON HFCred where
                                 , "password"      .= password c
                                 , "grant_type"    .= grantType c
                                 ]
+              withOpt Nothing = requiredFields
+              withOpt _       = merge_aeson [requiredFields, toJSON $ optionals c]
 
 formatTypeToText :: Show a => a -> T.Text
 formatTypeToText = T.pack . (camelTo2 '_') . show
@@ -116,3 +126,10 @@ formatTextToType key
 
 merge_aeson :: [Value] -> Value
 merge_aeson = Object . HML.unions . map (\(Object x) -> x)
+
+jsonToForm :: Value -> HMS.HashMap Text [Text]
+jsonToForm (Object v) =  HMS.map valueToText v
+
+valueToText :: Value -> [Text]
+valueToText (String x) = [x]
+valueToText (Number x)    = [T.pack $ show x]
