@@ -11,10 +11,9 @@ import Servant.API
 import Servant.Client
 
 type API = OauthTokenAPI
-       :<|> EmptyAPI
 
 api :: Proxy API
 api = Proxy
 
-(token :<|> EmptyClient ) = client api
+(token) = client api
 

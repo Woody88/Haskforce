@@ -1,19 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedLabels #-}
 
 module Haskforce 
     ( login
-
     ) 
     where
 
-import Haskforce.Internal 
-import Haskforce.Client 
-import Control.Exception 
+import Haskforce.Client
 
 
-login :: AuthType -> IO (AccessToken, HFClient)
-login authtype = authenticateClient authtype
-
-loginWith :: AuthType -> HFCred -> IO (AccessToken, HFClient)
-loginWith authtype hfcred = authenticateClientWith authtype hfcred
-
+login :: ClientRequest a => a -> SFBaseUrl -> IO (AuthResponse)
+login = requestAuthentication 

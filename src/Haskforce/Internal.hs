@@ -9,9 +9,8 @@ module Haskforce.Internal
     ( Resp 
     , HFClient(..)
     , HFCred(..)
-    , AccessToken(..)
     , HForceBadConfig (..)
-    , merge_aeson
+    , mergeAesonObject
     , valueToText
     , jsonToForm
     ) 
@@ -75,11 +74,6 @@ data HFCredAuth =
                , redirect_uri :: Text
                }
 
-
-newtype AccessToken = 
-    AccessToken { fromAccess :: Text } 
-    deriving Show
-
 instance FromJSON HFCred where
     parseJSON = genericParseJSON defaultOptions {
         fieldLabelModifier = camelTo2 '_'
@@ -114,7 +108,7 @@ instance ToJSON HFCred where
                                 , "grant_type"    .= grantType c
                                 ]
               withOpt Nothing = requiredFields
-              withOpt _       = merge_aeson [requiredFields, toJSON $ optionals c]
+              withOpt _       = mergeAesonObject [requiredFields, toJSON $ optionals c]
 
 formatTypeToText :: Show a => a -> T.Text
 formatTypeToText = T.pack . (camelTo2 '_') . show
@@ -124,8 +118,11 @@ formatTextToType key
     | key == "display" = Display 
     | otherwise = error "false"
 
-merge_aeson :: [Value] -> Value
-merge_aeson = Object . HML.unions . map (\(Object x) -> x)
+-- This function can throw an exception if value provided are not aeson Object types.
+-- it will filter aeson Null types.  
+mergeAesonObject :: [Value] -> Value
+mergeAesonObject = Object . HML.unions . map (\(Object x) -> x) . filterNull
+    where filterNull = filter (/=Null)
 
 jsonToForm :: Value -> HMS.HashMap Text [Text]
 jsonToForm (Object v) =  HMS.map valueToText v

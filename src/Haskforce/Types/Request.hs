@@ -11,19 +11,24 @@
 module Haskforce.Types.Request 
     ( AuthType(..)
     , GrantType(..)
+    , GrantTypeOpt (..)
     , TokenRequest(..)
     ) 
     where
 
 import GHC.Generics
 import Data.Aeson
+import Data.Aeson.Types
 import Data.Text (Text)
 import qualified Data.Text as T
-import Haskforce.Internal (merge_aeson)
+import qualified Data.HashMap.Lazy as HML
+import Haskforce.Internal (mergeAesonObject)
 import Haskforce.Types.UserCred
 import Haskforce.Types.Utils hiding (UserPassword)
 import qualified Haskforce.Types.Utils as U
 import Servant.Client
+
+type Optionals = HML.HashMap Text Text
 
 data AuthType =
       UserPassword
@@ -31,11 +36,15 @@ data AuthType =
     | WebServer
     | Resfresh  
 
-data GrantType =
+data GrantTypeOpt =
       Password
     | Authorize
     | Revoke
     deriving (Show, Generic)
+
+newtype GrantType = GrantType {grant_type :: GrantTypeOpt} deriving Generic
+
+
 
 data AuthorizeRequest = AuthorizeRequest 
     
@@ -46,26 +55,26 @@ data TokenRequest = TokenRequest
     , redirectUri  :: Maybe RedirectUri
     , code         :: Maybe Code
     , refreshToken :: Maybe RefreshToken
+    , optionals    :: Maybe Optionals
     }
 
-instance ToJSON GrantType where
+instance ToJSON GrantTypeOpt where
     toJSON = String . tshow
+
+instance ToJSON GrantType
 
 instance ToJSON TokenRequest where
     toJSON = generateJSONByAuthType 
-
 
 class AuthRequest a where
     generateJSONByAuthType :: a -> Value
 
 instance AuthRequest TokenRequest where
-    generateJSONByAuthType tr@(TokenRequest Password UserPassword _ _ _ _) = userPassJSON tr
+    generateJSONByAuthType tr@(TokenRequest (GrantType Password) UserPassword _ _ _ _ _) = userPassJson tr
     generateJSONByAuthType _ = undefined
 
-userPassJSON :: TokenRequest -> Value
-userPassJSON tr = merge_aeson [toJSON $ userCred tr, grantType']
-    where grantType' = object ["grant_type" .= grantType tr] 
-
+userPassJson :: TokenRequest -> Value
+userPassJson tr = mergeAesonObject [toJSON $ userCred tr, toJSON $ optionals tr, toJSON $ grantType tr]
 
 tshow :: Show a => a -> Text
 tshow = T.toLower . T.pack . show

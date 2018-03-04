@@ -20,7 +20,7 @@ extra-source-files:
 description:         Please see the README on Github at <https://github.com/githubuser/Haskforce#readme>
 
 dependencies:
-- base >= 4.7 && < 5
+- base >= 4.9 && < 5
 - http-types
 - http-conduit
 - http-client
@@ -41,7 +41,6 @@ dependencies:
 - http-client-tls
 library:
   source-dirs: src
-
 executables:
   Haskforce-exe:
     main:                Main.hs

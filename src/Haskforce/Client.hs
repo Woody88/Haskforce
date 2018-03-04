@@ -6,8 +6,10 @@
 
 {- This module will require a major refactoring...-}
 
-module Haskforce.Client where
+module Haskforce.Client 
     ( module Haskforce.Types
+    , ClientRequest
+    , SFBaseUrl
     , requestAuthentication
     , salesforceUrl
     , localHostTestUrl
@@ -32,6 +34,9 @@ import Control.Exception
 import Haskforce.Types
 import Haskforce.API.Oauth
 
+
+type SFBaseUrl = BaseUrl
+
 class ClientRequest a where
     authenticateQuery :: a -> ClientM AuthResponse
 
@@ -39,7 +44,7 @@ instance ClientRequest TokenRequest where
     authenticateQuery = loginQuery
 
 -- This function can throw SevantError Exception - will let enduser handle it the way they want.
-requestAuthentication :: ClientRequest a => a -> BaseUrl -> IO (AuthResponse)
+requestAuthentication :: ClientRequest a => a -> SFBaseUrl -> IO (AuthResponse)
 requestAuthentication request baseUrl = do
   manager' <- newManager tlsManagerSettings
   res <- runClientM (authenticateQuery request) (ClientEnv manager' baseUrl)
