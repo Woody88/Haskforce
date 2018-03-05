@@ -13,6 +13,8 @@ module Haskforce.Types.Utils where
 import GHC.Generics
 import Data.Text (Text)
 import Data.Aeson 
+import Web.HttpApiData
+import Data.Monoid ((<>))
 
 newtype Username     = Username { user :: Text} deriving Show
 newtype UserPassword = Userpassword { pass :: Text } deriving Show
@@ -37,3 +39,6 @@ instance FromJSON AccessToken where
 instance ToJSON AccessToken where
     toJSON token = object 
         [ "access_token" .= getAccessToken token ]
+
+instance ToHttpApiData AccessToken where
+    toUrlPiece = ("Bearer "<>) . getAccessToken
