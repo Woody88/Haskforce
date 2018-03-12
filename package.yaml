@@ -24,6 +24,7 @@ dependencies:
 - http-types
 - http-conduit
 - http-client
+- http-media
 - wreq
 - bytestring
 - aeson
@@ -64,6 +65,7 @@ executables:
     - transformers
     - hashmap
     - containers
+    - generics-eot
 tests:
   Haskforce-test:
     main:                Spec.hs

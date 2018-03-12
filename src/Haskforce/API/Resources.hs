@@ -13,19 +13,21 @@ import Servant.Client
 import Web.HttpApiData
 import Haskforce.Types.SForce(Version, SObject)
 import Haskforce.Types.Utils (AccessToken)
+import Haskforce.API.Resources.SObjectRow
+import Haskforce.API.Resources.Version
 
 type API = "data" :> SFEndpoints
 
-type SFEndpoints = SFVersion :<|> SFObject
-type SFVersion = Header "Authorization" AccessToken  :> Get '[JSON] [Version]
-type SFObject   = Header "Authorization" AccessToken :> Capture "apiVersion" Text
-                                                     :> Capture "resourceName" Text
-                                                     :> Capture "sobjectName" Text 
-                                                     :> Capture "sobjectId" Text
-                                                     :> QueryParam "fields" Text :> Get '[JSON] SObject
+type SFEndpoints = SFVersion :<|> SObjectRow
 
 api :: Proxy API
 api = Proxy
 
+versions :: Maybe AccessToken -> ClientM [Version]
+--sobject :: Maybe AccessToken -> Text -> Text -> Text -> Text -> Maybe Text -> ClientM (SObject2 a)
+
 (versions :<|> sobject) = client api
+
+
+
 

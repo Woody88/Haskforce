@@ -5,7 +5,7 @@
 
 module Haskforce.API.Oauth where
 
-import Haskforce.API.Oauth.Token 
+import Haskforce.API.Oauth.Token
 import Data.Proxy
 import Servant.API
 import Servant.Client
