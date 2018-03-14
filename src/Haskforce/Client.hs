@@ -5,6 +5,7 @@
 
 module Haskforce.Client 
     ( module Haskforce.Types
+    , module Haskforce.API.Resources
     , ClientRequest
     , SFBaseUrl
     , SFApiNumber
@@ -14,8 +15,6 @@ module Haskforce.Client
     , localHostTestUrl
     , apiVersion
     , getSObject
-    , getSObject'
-    , getSObject''
     ) 
     where
 
@@ -66,10 +65,6 @@ loginQuery tr = token tr
 getSFversions :: AccessToken -> ClientM [Version] 
 getSFversions accessToken' = versions $ Just accessToken'
 
-getSFObject :: AccessToken -> Text -> Text -> Text -> [Text] -> ClientM SObject
-getSFObject accessToken' apiv sobj id_ flds = sobject (Just accessToken') apiv resourceName sobj id_ (Just $ T.intercalate "," flds)
-    where resourceName = "sobjects"
-
 apiVersion :: SFClient -> IO [Version] 
 apiVersion (SFClient _ sfclient) = do
     manager' <- newManager tlsManagerSettings
@@ -79,33 +74,46 @@ apiVersion (SFClient _ sfclient) = do
         Left err -> throwIO err
         Right sfApiVersion -> return (sfApiVersion)
     where accessToken' = accessToken sfclient
-          getBaseUrl = liftIO $ parseBaseUrl $ (T.unpack (instanceUrl sfclient)) ++ "/services"
+          getBaseUrl = liftIO $ parseBaseUrl $ (T.unpack (instanceUrl sfclient)) ++ "/services" 
+
 
 {-| Each getSObject offers a different way to request an sobject the third method seems more appealing |-}
-getSObject :: SFClient -> Text -> Text -> [Text] -> IO SObject
-getSObject (SFClient apiv sfclient) sobj id_ flds = do
+-- getSObject :: SFClient -> Text -> Text -> [Text] -> IO SObject
+-- getSObject (SFClient apiv sfclient) sobj id_ flds = do
+--     manager' <- newManager tlsManagerSettings
+--     baseUrl  <- getBaseUrl
+--     res <- runClientM (getSFObject accessToken' apiv sobj id_ flds) (ClientEnv manager' baseUrl)
+--     case res of
+--         Left err -> throwIO err
+--         Right sobj' -> return (sobj')
+--     where accessToken' = accessToken sfclient
+--           getBaseUrl = liftIO $ parseBaseUrl $ (T.unpack (instanceUrl sfclient)) ++ "/services"
+
+
+-- getSObject' :: (HFFromJSON a, HFToJSON a) => SFClient -> a -> IO (Maybe a)
+-- getSObject' sfclient obj = do
+--     sobjectRow <- getSObject sfclient (sobjectName obj) "0016A00000JcdjK"　fields'
+--     return (parseMaybe myFromJSON $ sobjectRow)
+--     where fields' = keys obj
+
+getSObject :: SFClient -> SFId -> String -> [String] -> IO SObject 
+getSObject (SFClient apiv sfclient) sid objName flds = do
+    let getSFObjClient = getSFObject (Just accessToken') sobjectName sid (Just queryFields)
     manager' <- newManager tlsManagerSettings
     baseUrl  <- getBaseUrl
-    res <- runClientM (getSFObject accessToken' apiv sobj id_ flds) (ClientEnv manager' baseUrl)
+    res <- runClientM getSFObjClient (ClientEnv manager' baseUrl)
     case res of
         Left err -> throwIO err
-        Right sobj' -> return (sobj')
-    where accessToken' = accessToken sfclient
-          getBaseUrl = liftIO $ parseBaseUrl $ (T.unpack (instanceUrl sfclient)) ++ "/services"
-
-
-getSObject' :: (HFFromJSON a, HFToJSON a) => SFClient -> a -> IO (Maybe a)
-getSObject' sfclient obj = do
-    sobjectRow <- getSObject sfclient (sobjectName obj) "0016A00000JcdjK"　fields'
-    return (parseMaybe myFromJSON $ sobjectRow)
-    where fields' = keys obj
-
-getSObject'' :: (HFFromJSON a, HasEot a) => SFClient -> Text -> Proxy a -> IO (Maybe a)
-getSObject'' sfclient sid obj = do
-    sobjectRow <- getSObject sfclient sobjectName sid fields'
-    return (parseMaybe myFromJSON $ sobjectRow)
-    where fields' = map (T.pack . capitalized . adjustFromJsonField) $ (namesOfFields obj)
-          sobjectName = T.pack . datatypeName $ datatype obj
+        Right sobjectRow -> return (sobjectRow)
+    where fields'      = map (T.pack . capitalized . adjustFromJsonField) flds
+          queryFields  =  T.intercalate "," fields'
+          sobjectName  = T.pack objName
+          accessToken' = accessToken sfclient
+          getBaseUrl   = liftIO $ 
+                         parseBaseUrl $ 
+                         (T.unpack (instanceUrl sfclient)) ++ "/services/data/" 
+                                                           ++ (T.unpack apiv) 
+                                                           ++ "/sobjects" 
 
 localHostTestUrl = (BaseUrl Http "localhost" 8080 "")
 

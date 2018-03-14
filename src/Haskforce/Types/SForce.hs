@@ -20,6 +20,15 @@ import qualified Data.HashMap.Lazy as HML
 import Generics.Eot
 import Data.List
 
+type SFId = Text 
+
+type SObject = Value
+
+newtype SObject' a = SObject' SObject
+
+class DefaultWithId a where
+    defWithId :: SFId -> a
+  
 data Version = Version
     { version :: Text
     , label   :: Text 
@@ -42,7 +51,6 @@ capitalized (head:tail) = Char.toUpper head : lowered tail
     lowered [] = []
     lowered (head:tail) = Char.toLower head : lowered tail
 
-type SObject = Value
 
 class (Generic a, GFromJSON Zero (Rep a)) => HFFromJSON a where
     myFromJSON :: Value -> Parser a

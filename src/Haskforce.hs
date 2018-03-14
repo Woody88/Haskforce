@@ -5,12 +5,12 @@
 
 module Haskforce 
     ( login
-    , sobject
+    , module Client 
     ) 
     where
 
 import Data.Text (Text)
-import Haskforce.Client
+import Haskforce.Client as Client
 import Data.Proxy
 import Data.Aeson 
 import Data.Aeson.Types (Parser)
@@ -33,11 +33,11 @@ instance HFToJSON Account
 login :: ClientRequest a => a -> SFBaseUrl -> SFApiNumber -> IO SFClient
 login = requestAuthentication
 
--- I.E: sobject sfclient <SobjectId> (Proxy :: Proxy a)
-sobject :: (HasEot a, HFFromJSON a) =>  SFClient -> Text -> Proxy a-> IO (Maybe a)
-sobject = getSObject''
+-- -- I.E: sobject sfclient <SobjectId> (Proxy :: Proxy a)
+-- sobject :: (HasEot a, HFFromJSON a) =>  SFClient -> Text -> Proxy a-> IO (Maybe a)
+-- sobject = getSObject''
 
--- I.E: sobject sfclient "Account" "<SobjectId>" ["Id", "Name"]
-sobject' ::  SFClient -> Text -> Text -> [Text] -> IO (SObject)
-sobject' = getSObject
+-- -- I.E: sobject sfclient "Account" "<SobjectId>" ["Id", "Name"]
+-- sobject' ::  SFClient -> Text -> Text -> [Text] -> IO (SObject)
+-- sobject' = getSObject
 
