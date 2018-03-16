@@ -85,7 +85,7 @@ getSObject (SFClient apiv sfclient) sid objName flds = do
     case res of
         Left err -> throwIO err
         Right sobjectRow -> return (sobjectRow)
-    where fields'      = map (T.pack . capitalized . adjustFromJsonField) flds
+    where fields'      = map T.pack flds
           queryFields  =  T.intercalate "," fields'
           sobjectName  = T.pack objName
           accessToken' = accessToken sfclient

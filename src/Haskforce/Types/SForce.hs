@@ -19,8 +19,9 @@ import Data.HashMap.Strict as HMS
 import qualified Data.HashMap.Lazy as HML
 import Generics.Eot
 import Data.List
+import Web.HttpApiData (ToHttpApiData(..))
 
-type SFId = Text 
+newtype SFId = SFId Text deriving Show
 
 type SObject = Value
 
@@ -36,13 +37,27 @@ data Version = Version
     } deriving (Show, Generic)
 
 instance FromJSON Version
-             
+
+instance FromJSON SFId where
+    parseJSON = withText "Id" $ \i -> do
+        return $ SFId i
+
+instance ToJSON SFId where
+    toJSON (SFId i) = object 
+        [ "Id" .= i ]
+
+instance ToHttpApiData SFId where
+    toQueryParam (SFId id) = id
+
 adjustFromJsonField :: String -> String
-adjustFromJsonField "id_" = "Id"
+adjustFromJsonField "Id" = "AccountId"
+adjustFromJsonField "AccountId" = "Id"
 adjustFromJsonField "type_" = "type"
 adjustFromJsonField "fields" = "data"
 adjustFromJsonField x = x
 
+toLowerCase :: String -> String 
+toLowerCase = T.unpack . T.toLower . T.pack
 
 capitalized :: String -> String
 capitalized [] = []
@@ -51,10 +66,17 @@ capitalized (head:tail) = Char.toUpper head : lowered tail
     lowered [] = []
     lowered (head:tail) = Char.toLower head : lowered tail
 
+deCapitalized :: String -> String
+deCapitalized (head:tail) = Char.toLower head : tail
+
+firstCharToUpper :: String -> String 
+firstCharToUpper (head:tail) = Char.toUpper head : tail
+
+
 
 class (Generic a, GFromJSON Zero (Rep a)) => HFFromJSON a where
     myFromJSON :: Value -> Parser a
-    myFromJSON (Object v) = genericParseJSON defaultOptions { fieldLabelModifier = capitalized . adjustFromJsonField} v'
+    myFromJSON (Object v) = genericParseJSON defaultOptions { fieldLabelModifier = adjustFromJsonField . firstCharToUpper} v'
         where v' = Object (HMS.delete "attributes" $ v) :: Value
 
 class (Typeable a, Generic a, GToJSON Zero (Rep a)) => HFToJSON a where
