@@ -6,12 +6,16 @@
 module Haskforce 
     ( login
     , module Client 
+    , module SFTypes
     ) 
     where
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import Servant.API
+import Servant.Client
 import Haskforce.Client as Client
+import Haskforce.SForce.Common as SFTypes
 import Data.Proxy
 import Data.Aeson 
 import Data.Aeson.Types 
@@ -20,24 +24,23 @@ import Generics.Eot
 
 {-| Example. This demonstrate how an end user would define their own SObject Types.
  
-data Account = Account
-    { accountId :: SFId
-    , name :: Text
-    } deriving (Generic, Show)
-    
+  data Account = Account 
+          { name      :: Text
+          } deriving (Generic, Show)
+      
+  instance SFObject Account where
+      sobjectName _ = "Account"
 
-    instance HFFromJSON Account
-    instance HFToJSON Account
-
-    instance FromJSON Account where
-      parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = adjustFromJsonField }  
-    
-    instance ToJSON Account where
-      toJSON = genericToJSON defaultOptions { fieldLabelModifier = capitalized . adjustFromJsonField}
-
+  instance ToJSON Account 
+  instance FromJSON Account 
 -}
 
 -- I.E: login tokenRequest salesforceUrl "v42.0"
-login :: ClientRequest a => a -> SFBaseUrl -> SFApiNumber -> IO SFClient
-login = requestAuthentication
+login :: ClientRequest a => a -> SFBaseUrl -> SFApiNumber -> IO (Either ServantError SFClient)
+login clientRequest sfurl apiv = do
+    res <- requestAuthentication clientRequest sfurl 
+    validate res
+    where validate res = case res of
+                            Left x -> return $ Left x
+                            Right sfclient -> return $ Right (SFClient apiv sfclient)
 
