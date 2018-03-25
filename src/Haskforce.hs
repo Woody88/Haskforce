@@ -7,6 +7,8 @@ module Haskforce
     ( login
     , module Client 
     , module SFTypes
+    , Query(..)
+    , SQuery(..)
     ) 
     where
 
@@ -16,6 +18,7 @@ import Servant.API
 import Servant.Client
 import Haskforce.Client as Client
 import Haskforce.SForce.Common as SFTypes
+import Haskforce.SForce.Query 
 import Data.Proxy
 import Data.Aeson 
 import Data.Aeson.Types 

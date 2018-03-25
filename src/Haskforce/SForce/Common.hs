@@ -11,7 +11,7 @@ import Data.Text (Text)
 import Data.Aeson 
 import Data.Aeson.Types
 import GHC.Generics
-import Servant.Common.BaseUrl
+import Servant.Client.Core.Internal.BaseUrl
 import Data.HashMap.Strict as HMS
 import Web.HttpApiData (ToHttpApiData(..))
 import Control.Monad
@@ -35,7 +35,7 @@ data SFErrorResponse = SFError
 
 data SObjectAttr = SObjectAttr
     { sobjectType :: SObjectType
-    , sobjetUrl   :: UrlPath
+    , sobjectUrl   :: UrlPath
     } deriving (Generic, Show)
 
 data SObjectData a = SObjectData 

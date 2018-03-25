@@ -38,8 +38,9 @@ dependencies:
 - hashmap
 - containers
 - unordered-containers
-- servant
-- servant-client
+- servant >= 0.13
+- servant-client >= 0.13
+- servant-client-core >= 0.13
 
 library:
   source-dirs: src
